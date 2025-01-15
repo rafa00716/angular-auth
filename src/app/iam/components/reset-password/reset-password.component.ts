@@ -10,59 +10,45 @@ import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-
 @Component({
-  selector: 'app-login',
+  selector: 'app-reset-password',
   standalone: true,
   imports: [MatCardModule, MatFormFieldModule, MatInputModule, ReactiveFormsModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule, CommonModule],
-  templateUrl: './login.component.html',
-  styleUrl: './login.component.scss'
+  templateUrl: './reset-password.component.html',
+  styleUrl: './reset-password.component.scss'
 })
-export class LoginComponent implements OnInit {
-
-  loginForm!: FormGroup;
+export class ResetPasswordComponent {
+resetForm!: FormGroup;
   private _snackBar = inject(MatSnackBar);
   submiting = false;
   
   constructor(private fb: FormBuilder, public authService: AuthService, private router: Router, private injector: Injector) {
-    this.loginForm = this.fb.group({
+    this.resetForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      password: ['', Validators.required],
     });
   }
-  ngOnInit(): void {
-    if (this.authService.currentUser()) {
-      this.navigateApp();
-    }
+  ngOnInit(): void { }
 
-    if (this.authService.currentUser() === undefined) {
-      this.authService.getProfile().subscribe({
-        next: (profile) => {
-          this.authService.currentUser.set(profile);
-          setTimeout(() => {
-            this.navigateApp();
-          }, 3000);
-        },
-      })
-    }
-  }
-
-  navigateApp(){
-    this.router.navigate(['app'])
+  navigateAuth(){
+    this.router.navigate(['auth'])
   }
 
   onSubmit() {
     this.submiting = true;
-    if (this.loginForm.valid) {
-      const { email, password } = this.loginForm.value;
-      this.authService.login({ email, password })
-      .then((profile)=>this.navigateApp())
-      .catch(err=>this._snackBar.open('Logging failed'))
-      .finally(()=>this.submiting = false);
+    if (this.resetForm.valid) {
+      const { email } = this.resetForm.value;
+      this.authService.resetPassword(email).subscribe({
+        next: () =>{
+          this._snackBar.open('Password reset successfull');
+          this.navigateAuth();
+        },
+        error: (error) => {
+          console.log({ error });
+          this.submiting = false;
+          this._snackBar.open('Password reset failed');
+        }
+      })
     }
   }
 
-  onForgotPassword() {
-    this.router.navigate(['auth/reset-password'])
-  }
 }
